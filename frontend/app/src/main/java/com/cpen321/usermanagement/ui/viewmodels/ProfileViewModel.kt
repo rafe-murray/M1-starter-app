@@ -87,6 +87,14 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    fun deleteProfile() {
+            viewModelScope.launch {
+                val userResult = profileRepository.getProfile()
+                if (userResult.isSuccess) {
+                    profileRepository.deleteProfile(userResult.getOrNull()!!)
+                }
+            }
+    }
     fun toggleHobby(hobby: String) {
         val currentSelected = _uiState.value.selectedHobbies.toMutableSet()
         if (currentSelected.contains(hobby)) {

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.cpen321.usermanagement.data.remote.dto.AuthData
 import com.cpen321.usermanagement.data.remote.dto.User
 import com.cpen321.usermanagement.data.repository.AuthRepository
+import com.cpen321.usermanagement.data.repository.ProfileRepository
 import com.cpen321.usermanagement.ui.navigation.NavRoutes
 import com.cpen321.usermanagement.ui.navigation.NavigationStateManager
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -169,7 +170,7 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun handleAccountDeletion() {
+    fun handleSignOut() {
         viewModelScope.launch {
             authRepository.clearToken()
             _uiState.value = AuthUiState(
