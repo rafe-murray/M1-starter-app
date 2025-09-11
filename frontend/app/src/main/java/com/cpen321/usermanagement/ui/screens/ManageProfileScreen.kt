@@ -3,6 +3,7 @@ package com.cpen321.usermanagement.ui.screens
 import Button
 import Icon
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -56,6 +57,7 @@ import com.cpen321.usermanagement.ui.components.MessageSnackbarState
 import com.cpen321.usermanagement.ui.viewmodels.ProfileUiState
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
 import com.cpen321.usermanagement.ui.theme.LocalSpacing
+import androidx.core.net.toUri
 
 private data class ProfileFormState(
     val name: String = "",
@@ -372,14 +374,18 @@ private fun ProfilePictureWithEdit(
 ) {
     val spacing = LocalSpacing.current
 
+    val uri = RetrofitClient.getPictureUri(profilePicture).toUri();
+    Log.e("DEBUG",uri.toString())
     Box(
         modifier = modifier.size(spacing.extraLarge5)
     ) {
         AsyncImage(
-            model = RetrofitClient.getPictureUri(profilePicture),
+            model = RetrofitClient.getPictureUri(profilePicture).toUri(),
             onLoading = { onLoadingChange(true) },
             onSuccess = { onLoadingChange(false) },
-            onError = { onLoadingChange(false) },
+            onError = {
+                Log.e("DEBUG","Could not load image $profilePicture")
+                onLoadingChange(false) },
             contentDescription = stringResource(R.string.profile_picture),
             modifier = Modifier
                 .fillMaxSize()
@@ -446,7 +452,7 @@ private fun ProfileFields(
             enabled = false
         )
 
-        Row(Modifier.focusProperties { canFocus = false }) {
+        Row(Modifier.focusProperties { canFocus = true }) {
             OutlinedTextField(
                 value = data.bio,
                 onValueChange = data.onBioChange,
@@ -455,7 +461,6 @@ private fun ProfileFields(
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
                 maxLines = 5,
-                readOnly = true
             )
         }
     }

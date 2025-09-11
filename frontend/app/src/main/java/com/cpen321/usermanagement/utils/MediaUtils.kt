@@ -1,9 +1,13 @@
 package com.cpen321.usermanagement.utils
 
+import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import android.webkit.MimeTypeMap
 import java.io.File
+import java.util.Locale
+
 
 object MediaUtils {
 
@@ -61,5 +65,18 @@ object MediaUtils {
                 input.copyTo(output)
             }
         }
+    }
+    fun uriToMimeType(context:Context, uri:Uri): String? {
+        var mimeType: String? = null
+        if (ContentResolver.SCHEME_CONTENT == uri.scheme) {
+            mimeType = context.contentResolver.getType(uri)
+        } else {
+            val fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
+            if (fileExtension != null) {
+                mimeType = MimeTypeMap.getSingleton()
+                    .getMimeTypeFromExtension(fileExtension.lowercase(Locale.getDefault()))
+            }
+        }
+        return mimeType
     }
 }

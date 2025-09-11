@@ -88,12 +88,9 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun deleteProfile() {
-            viewModelScope.launch {
-                val userResult = profileRepository.getProfile()
-                if (userResult.isSuccess) {
-                    profileRepository.deleteProfile(userResult.getOrNull()!!)
-                }
-            }
+        viewModelScope.launch {
+            profileRepository.deleteProfile(_uiState.value.user!! )
+        }
     }
     fun toggleHobby(hobby: String) {
         val currentSelected = _uiState.value.selectedHobbies.toMutableSet()
@@ -157,8 +154,30 @@ class ProfileViewModel @Inject constructor(
     fun uploadProfilePicture(pictureUri: Uri) {
         viewModelScope.launch {
             val currentUser = _uiState.value.user ?: return@launch
-            val updatedUser = currentUser.copy(profilePicture = pictureUri.toString())
-            _uiState.value = _uiState.value.copy(isLoadingPhoto = false, user= updatedUser, successMessage = "Profile picture updated successfully!")
+            val imageResult = profileRepository.uploadImage(pictureUri);
+            if (imageResult.isSuccess) {
+                val result = profileRepository.updateProfile(null, null, imageResult.getOrNull()!!)
+                if (result.isSuccess) {
+                    val updatedUser = currentUser.copy(profilePicture = pictureUri.toString())
+                    _uiState.value = _uiState.value.copy(isLoadingPhoto = false, user= updatedUser, successMessage = "Profile picture updated successfully!")
+                } else {
+                    val error = result.exceptionOrNull()
+                    Log.e(TAG, "Failed to upload photo", error)
+                    val errorMessage = error?.message ?: "Failed to update profile"
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingPhoto = false,
+                        errorMessage = errorMessage
+                    )
+                }
+            } else {
+                val error = imageResult.exceptionOrNull()
+                Log.e(TAG, "Failed to upload photo", error)
+                val errorMessage = error?.message ?: "Failed to update profile"
+                _uiState.value = _uiState.value.copy(
+                    isLoadingPhoto = false,
+                    errorMessage = errorMessage
+                )
+            }
         }
     }
 
@@ -171,7 +190,7 @@ class ProfileViewModel @Inject constructor(
                     successMessage = null
                 )
 
-            val result = profileRepository.updateProfile(name, bio)
+            val result = profileRepository.updateProfile(name, bio, null)
             if (result.isSuccess) {
                 val updatedUser = result.getOrNull()!!
                 _uiState.value = _uiState.value.copy(
