@@ -11,7 +11,7 @@ COPY --chown=node . .
 # Install typescript compiler
 RUN npm i -g typescript
 # RUN npm ci --omit=dev && npm run build
-RUN npm ci
+RUN npm i
 RUN npm run build
 
 # Run the application as a non-root user.

@@ -1,9 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
 
-import { GetProfileResponse, UpdateProfileRequest } from './user.types';
-import logger from './logger.util';
-import { MediaService } from './media.service';
-import { userModel } from './user.model';
+import { GetProfileResponse, UpdateProfileRequest } from '../types/user.types';
+import logger from '../logger.util';
+import { MediaService } from '../media.service';
+import { userModel } from '../models/user.model';
+import { spotifyAuthController, SpotifyAuthController } from './spotify';
+import { spotifyAuthModel } from '../models/spotify';
 
 export class UserController {
   getProfile(req: Request, res: Response<GetProfileResponse>) {
@@ -53,6 +55,7 @@ export class UserController {
       const user = req.user!;
 
       await MediaService.deleteAllUserImages(user._id.toString());
+      await spotifyAuthModel.delete(user._id);
 
       await userModel.delete(user._id);
 

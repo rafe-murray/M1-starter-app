@@ -24,6 +24,9 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         signingConfig = signingConfigs.getByName("debug")
+        manifestPlaceholders += mapOf("redirectHostName" to "callback",
+            "redirectSchemeName" to "cpen321"     )
+
     }
 
     buildTypes {
@@ -68,6 +71,7 @@ dependencies {
     
     // Hilt Dependency Injection
     implementation(libs.hilt.android)
+    implementation(libs.auth)
     ksp(libs.hilt.android.compiler)
     implementation(libs.hilt.navigation.compose)
     

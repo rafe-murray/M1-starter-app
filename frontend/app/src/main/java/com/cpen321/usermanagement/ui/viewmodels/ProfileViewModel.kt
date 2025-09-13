@@ -4,8 +4,10 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpen321.usermanagement.data.remote.dto.SpotifyTrack
 import com.cpen321.usermanagement.data.remote.dto.User
 import com.cpen321.usermanagement.data.repository.ProfileRepository
+import com.cpen321.usermanagement.data.repository.SpotifyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,11 +20,13 @@ data class ProfileUiState(
     val isLoadingProfile: Boolean = false,
     val isSavingProfile: Boolean = false,
     val isLoadingPhoto: Boolean = false,
+    val isLoadingSpotify: Boolean = false,
 
     // Data states
     val user: User? = null,
     val allHobbies: List<String> = emptyList(),
     val selectedHobbies: Set<String> = emptySet(),
+    val tracks: List<SpotifyTrack> = emptyList(),
 
     // Message states
     val errorMessage: String? = null,
@@ -31,7 +35,8 @@ data class ProfileUiState(
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val spotifyRepository: SpotifyRepository
 ) : ViewModel() {
 
     companion object {
@@ -86,7 +91,24 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
-
+    fun loadSpotifyTracks() {
+        viewModelScope.launch{
+            _uiState.value = _uiState.value.copy(isLoadingSpotify = true, errorMessage = null)
+            val result = spotifyRepository.getTracks();
+            if (result.isSuccess) {
+                val tracks = result.getOrNull()!!
+                _uiState.value = _uiState.value.copy(
+                    isLoadingSpotify = false,
+                    tracks = tracks.toList(),
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isLoadingSpotify = false,
+                    errorMessage = "Failed to load Spotify tracks"
+                )
+            }
+        }
+    }
     fun deleteProfile() {
         viewModelScope.launch {
             profileRepository.deleteProfile(_uiState.value.user!! )
@@ -154,7 +176,7 @@ class ProfileViewModel @Inject constructor(
     fun uploadProfilePicture(pictureUri: Uri) {
         viewModelScope.launch {
             val currentUser = _uiState.value.user ?: return@launch
-            val imageResult = profileRepository.uploadImage(pictureUri);
+            val imageResult = profileRepository.uploadImage(pictureUri)
             if (imageResult.isSuccess) {
                 val result = profileRepository.updateProfile(null, null, imageResult.getOrNull()!!)
                 if (result.isSuccess) {

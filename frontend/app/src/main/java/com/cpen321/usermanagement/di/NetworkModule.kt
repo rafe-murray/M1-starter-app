@@ -4,6 +4,7 @@ import com.cpen321.usermanagement.data.remote.api.AuthInterface
 import com.cpen321.usermanagement.data.remote.api.HobbyInterface
 import com.cpen321.usermanagement.data.remote.api.ImageInterface
 import com.cpen321.usermanagement.data.remote.api.RetrofitClient
+import com.cpen321.usermanagement.data.remote.api.SpotifyInterface
 import com.cpen321.usermanagement.data.remote.api.UserInterface
 import dagger.Module
 import dagger.Provides
@@ -37,5 +38,11 @@ object NetworkModule {
     @Singleton
     fun provideHobbyService(): HobbyInterface {
         return RetrofitClient.hobbyInterface
+    }
+
+    @Provides
+    @Singleton
+    fun provideSpotifyService(): SpotifyInterface {
+        return RetrofitClient.spotifyInterface
     }
 }

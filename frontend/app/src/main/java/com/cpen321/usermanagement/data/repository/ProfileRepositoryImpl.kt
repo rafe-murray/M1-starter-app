@@ -106,16 +106,16 @@ class ProfileRepositoryImpl @Inject constructor(
                 Result.failure(Exception(errorMessage))
             }
         } catch (e: java.net.SocketTimeoutException) {
-            Log.e(TAG, "Network timeout while updating hobbies", e)
+            Log.e(TAG, "Network timeout while deleting profile", e)
             Result.failure(e)
         } catch (e: java.net.UnknownHostException) {
-            Log.e(TAG, "Network connection failed while updating hobbies", e)
+            Log.e(TAG, "Network connection failed while deleting profile", e)
             Result.failure(e)
         } catch (e: java.io.IOException) {
-            Log.e(TAG, "IO error while updating hobbies", e)
+            Log.e(TAG, "IO error while deleting profile", e)
             Result.failure(e)
         } catch (e: retrofit2.HttpException) {
-            Log.e(TAG, "HTTP error while updating hobbies: ${e.code()}", e)
+            Log.e(TAG, "HTTP error while deleting profile: ${e.code()}", e)
             Result.failure(e)
         }
     }
@@ -176,7 +176,6 @@ class ProfileRepositoryImpl @Inject constructor(
 
     override suspend fun uploadImage(image: Uri): Result<String> {
         return try {
-            Log.e("DEBUG", uriToMimeType(context, image)?.toMediaTypeOrNull()?.toString() ?: "")
             val file = uriToFile(context,image)
             val response = imageInterface.uploadPicture("", MultipartBody.Part.createFormData("media", file.name,file.asRequestBody(
                 uriToMimeType(context, image)?.toMediaTypeOrNull()

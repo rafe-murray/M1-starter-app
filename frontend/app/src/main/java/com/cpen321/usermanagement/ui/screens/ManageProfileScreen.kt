@@ -2,11 +2,10 @@ package com.cpen321.usermanagement.ui.screens
 
 import Button
 import Icon
+import android.app.Activity
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,9 +43,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat.startActivityForResult
 import coil.compose.AsyncImage
 import com.cpen321.usermanagement.R
 import com.cpen321.usermanagement.data.remote.api.RetrofitClient
@@ -58,6 +59,13 @@ import com.cpen321.usermanagement.ui.viewmodels.ProfileUiState
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
 import com.cpen321.usermanagement.ui.theme.LocalSpacing
 import androidx.core.net.toUri
+import com.cpen321.usermanagement.BuildConfig
+import com.cpen321.usermanagement.data.remote.dto.SpotifyTrack
+import com.cpen321.usermanagement.ui.components.SpotifyTracks
+import com.spotify.sdk.android.auth.AuthorizationClient
+import com.spotify.sdk.android.auth.AuthorizationRequest
+import com.spotify.sdk.android.auth.AuthorizationResponse
+import com.spotify.sdk.android.auth.LoginActivity.REQUEST_CODE
 
 private data class ProfileFormState(
     val name: String = "",
@@ -94,7 +102,8 @@ private data class ProfileFormData(
     val onBioChange: (String) -> Unit,
     val onEditPictureClick: () -> Unit,
     val onSaveClick: () -> Unit,
-    val onLoadingPhotoChange: (Boolean) -> Unit
+    val onLoadingPhotoChange: (Boolean) -> Unit,
+    val tracks: List<SpotifyTrack>
 )
 
 private data class ProfileBodyData(
@@ -112,7 +121,8 @@ private data class ProfileFieldsData(
     val email: String,
     val bio: String,
     val onNameChange: (String) -> Unit,
-    val onBioChange: (String) -> Unit
+    val onBioChange: (String) -> Unit,
+    val tracks: List<SpotifyTrack>
 )
 
 @Composable
@@ -136,6 +146,9 @@ fun ManageProfileScreen(
         profileViewModel.clearError()
         if (uiState.user == null) {
             profileViewModel.loadProfile()
+        }
+        if (uiState.tracks.isEmpty()) {
+            profileViewModel.loadSpotifyTracks()
         }
     }
 
@@ -283,7 +296,8 @@ private fun ProfileBody(
                         onBioChange = data.onBioChange,
                         onEditPictureClick = data.onEditPictureClick,
                         onSaveClick = data.onSaveClick,
-                        onLoadingPhotoChange = data.onLoadingPhotoChange
+                        onLoadingPhotoChange = data.onLoadingPhotoChange,
+                        tracks = data.uiState.tracks
                     )
                 )
             }
@@ -320,7 +334,8 @@ private fun ProfileForm(
                 email = data.user.email,
                 bio = data.formState.bio,
                 onNameChange = data.onNameChange,
-                onBioChange = data.onBioChange
+                onBioChange = data.onBioChange,
+                tracks = data.tracks
             )
         )
 
@@ -374,8 +389,8 @@ private fun ProfilePictureWithEdit(
 ) {
     val spacing = LocalSpacing.current
 
-    val uri = RetrofitClient.getPictureUri(profilePicture).toUri();
-    Log.e("DEBUG",uri.toString())
+    val uri = RetrofitClient.getPictureUri(profilePicture).toUri()
+    Log.e("DEBUG", uri.toString())
     Box(
         modifier = modifier.size(spacing.extraLarge5)
     ) {
@@ -384,8 +399,9 @@ private fun ProfilePictureWithEdit(
             onLoading = { onLoadingChange(true) },
             onSuccess = { onLoadingChange(false) },
             onError = {
-                Log.e("DEBUG","Could not load image $profilePicture")
-                onLoadingChange(false) },
+                Log.e("DEBUG", "Could not load image $profilePicture")
+                onLoadingChange(false)
+            },
             contentDescription = stringResource(R.string.profile_picture),
             modifier = Modifier
                 .fillMaxSize()
@@ -435,6 +451,7 @@ private fun ProfileFields(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        val context = LocalContext.current
         OutlinedTextField(
             value = data.name,
             onValueChange = data.onNameChange,
@@ -463,6 +480,25 @@ private fun ProfileFields(
                 maxLines = 5,
             )
         }
+        Button(onClick = {
+            val scopes = arrayOf("user-read-email", "playlist-read-private")
+
+            val request = AuthorizationRequest.Builder(
+                BuildConfig.SPOTIFY_CLIENT_ID,
+                AuthorizationResponse.Type.CODE,
+                "cpen321://callback"
+            ).setScopes(scopes).build()
+
+            val activity = context as Activity
+            Log.e("DEBUG", activity.toString())
+            val intent = AuthorizationClient.createLoginActivityIntent(activity, request)
+            AuthorizationClient.openLoginInBrowser(context, request)
+//            AuthorizationClient.openLoginActivity(activity, REQUEST_CODE, request)
+//            startActivityForResult(activity, intent, REQUEST_CODE, null)
+        }) {
+            Text("Login with Spotify")
+        }
+        SpotifyTracks(data.tracks)
     }
 }
 
